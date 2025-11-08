@@ -18,11 +18,14 @@ pipeline{
                 sh 'dotnet build -c Release src/Presentation/Nop.Web/Nop.Web.csproj'
                 sh 'mkdir published && dotnet publish -o ./published -c Release src/Presentation/Nop.Web/Nop.Web.csproj'
             }
-            post{
+            post {
                 success {
-                    zip zipFile: './published.zip',
-                        archive: true ,
-                        dir: './published'
+                sh '''
+                    set -e
+                    command -v zip >/dev/null 2>&1 || { sudo apt-get update -y && sudo apt-get install -y zip; }
+                    (cd published && zip -r ../published.zip .)
+                '''
+                archiveArtifacts artifacts: 'published.zip', fingerprint: true
                 }
             }
         }
