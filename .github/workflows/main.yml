@@ -1,0 +1,40 @@
+name: Build NopCommerce
+
+on:
+  push:
+    branches: [ develop ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 9
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Build & Publish
+        run: |
+          rm -rf published published.zip || true
+
+          dotnet restore src/Presentation/Nop.Web/Nop.Web.csproj
+          dotnet build -c Release src/Presentation/Nop.Web/Nop.Web.csproj
+
+          dotnet publish -c Release -o published src/Presentation/Nop.Web/Nop.Web.csproj
+
+          sudo apt-get update -y
+          sudo apt-get install -y zip
+
+          cd published
+          zip -r ../published.zip .
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: published
+          path: published.zip
