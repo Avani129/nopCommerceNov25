@@ -13,18 +13,26 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v4
 
-   #   - name: Setup .NET 9
-   #    uses: actions/setup-dotnet@v4
-   #   with:
-   #     dotnet-version: 9.0.x
+      # ✅ FIX: install dotnet to a user-writable folder (no /usr/share/dotnet)
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'   # or '8.0.x' for LTS
+        env:
+          DOTNET_INSTALL_DIR: ${{ runner.temp }}/dotnet
+
+      - name: Add dotnet to PATH
+        run: |
+          echo "${{ runner.temp }}/dotnet" >> $GITHUB_PATH
+          echo "DOTNET_ROOT=${{ runner.temp }}/dotnet" >> $GITHUB_ENV
 
       - name: Build & Publish
         run: |
           rm -rf published published.zip || true
 
+          dotnet --info
           dotnet restore src/Presentation/Nop.Web/Nop.Web.csproj
           dotnet build -c Release src/Presentation/Nop.Web/Nop.Web.csproj
-
           dotnet publish -c Release -o published src/Presentation/Nop.Web/Nop.Web.csproj
 
           sudo apt-get update -y
